@@ -1,0 +1,71 @@
+# ============================================================
+# Jupyter + Spark Master Container with Feature Store Libraries
+# Base: Python 3.11 with Java for Spark compatibility
+# ============================================================
+FROM jupyter/pyspark-notebook:python-3.11
+
+USER root
+
+# ============================================================
+# System Dependencies
+# ============================================================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    libpq-dev \
+    postgresql-client \
+    netcat-openbsd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# ============================================================
+# Python Dependencies
+# ============================================================
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements.txt
+
+# ============================================================
+# Spark Configuration for Kafka and Delta Lake
+# ============================================================
+ENV SPARK_HOME=/usr/local/spark
+ENV PYSPARK_PYTHON=python3
+ENV PYSPARK_DRIVER_PYTHON=jupyter
+ENV PYSPARK_DRIVER_PYTHON_OPTS="lab"
+
+# Download Spark JARs for Kafka and Delta Lake integration
+RUN mkdir -p ${SPARK_HOME}/jars && \
+    curl -L -o ${SPARK_HOME}/jars/spark-sql-kafka-0-10_2.12-3.5.0.jar \
+        https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.12/3.5.0/spark-sql-kafka-0-10_2.12-3.5.0.jar && \
+    curl -L -o ${SPARK_HOME}/jars/kafka-clients-3.5.1.jar \
+        https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.5.1/kafka-clients-3.5.1.jar && \
+    curl -L -o ${SPARK_HOME}/jars/spark-token-provider-kafka-0-10_2.12-3.5.0.jar \
+        https://repo1.maven.org/maven2/org/apache/spark/spark-token-provider-kafka-0-10_2.12/3.5.0/spark-token-provider-kafka-0-10_2.12-3.5.0.jar && \
+    curl -L -o ${SPARK_HOME}/jars/commons-pool2-2.11.1.jar \
+        https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/2.11.1/commons-pool2-2.11.1.jar && \
+    curl -L -o ${SPARK_HOME}/jars/delta-spark_2.12-3.0.0.jar \
+        https://repo1.maven.org/maven2/io/delta/delta-spark_2.12/3.0.0/delta-spark_2.12-3.0.0.jar && \
+    curl -L -o ${SPARK_HOME}/jars/delta-storage-3.0.0.jar \
+        https://repo1.maven.org/maven2/io/delta/delta-storage/3.0.0/delta-storage-3.0.0.jar && \
+    curl -L -o ${SPARK_HOME}/jars/postgresql-42.6.0.jar \
+        https://repo1.maven.org/maven2/org/postgresql/postgresql/42.6.0/postgresql-42.6.0.jar
+
+# ============================================================
+# Working Directory and Permissions
+# ============================================================
+WORKDIR /home/jovyan
+RUN mkdir -p /home/jovyan/notebooks /home/jovyan/data /home/jovyan/feast_repo && \
+    chown -R jovyan:users /home/jovyan
+
+USER jovyan
+
+# ============================================================
+# Expose Ports
+# ============================================================
+EXPOSE 8888 4040
+
+# ============================================================
+# Startup Command
+# ============================================================
+CMD ["start-notebook.sh", "--NotebookApp.token='feast-token'", "--NotebookApp.allow_origin='*'"]

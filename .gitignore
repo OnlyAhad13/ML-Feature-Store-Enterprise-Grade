@@ -1,0 +1,155 @@
+# ============================================================
+# ML Feature Store - .gitignore
+# ============================================================
+
+# ======================== Python ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+.conda/
+
+# ======================== Jupyter ========================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+*.ipynb metadata
+
+# ======================== IDE ========================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ======================== OS ========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.log
+*.tmp
+*.temp
+
+# ======================== Data Files ========================
+# Large data files (should be versioned with DVC or stored externally)
+data/user_profiles.csv
+data/user_profiles.parquet
+data/offline_store/
+data/checkpoints/
+*.csv
+*.parquet
+!requirements.txt
+
+# ======================== Feast ========================
+# Registry and cached data
+feast_repo/data/
+feast_repo/registry.db
+feast_repo/.feastignore
+*.registry.db
+
+# ======================== Spark ========================
+spark/data/
+spark/logs/
+spark-warehouse/
+metastore_db/
+derby.log
+
+# ======================== Docker ========================
+# Don't ignore docker-compose.yaml but ignore runtime data
+docker-compose.override.yaml
+.docker/
+
+# ======================== Airflow ========================
+airflow/logs/
+airflow/plugins/__pycache__/
+airflow/*.db
+airflow/*.cfg
+airflow/webserver_config.py
+*.pid
+
+# ======================== Redis ========================
+dump.rdb
+*.rdb
+*.aof
+
+# ======================== PostgreSQL ========================
+*.sql.gz
+*.dump
+
+# ======================== Great Expectations ========================
+great_expectations/uncommitted/
+great_expectations/checkpoints/
+great_expectations/.ge_store_backend_id
+gx/
+
+# ======================== MLflow ========================
+mlruns/
+mlartifacts/
+
+# ======================== Secrets & Config ========================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+config/local/
+
+# ======================== Testing ========================
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.coverage
+.hypothesis/
+
+# ======================== Build Artifacts ========================
+*.jar
+*.class
+target/
+
+# ======================== Logs ========================
+logs/
+*.log
+log/
+
+# ======================== Misc ========================
+*.bak
+*.backup
+.cache/
+tmp/
+temp/

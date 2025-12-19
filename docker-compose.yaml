@@ -1,0 +1,248 @@
+# ============================================
+# ML Feature Store Platform
+# Feast + Kafka + Spark + Redis
+# ============================================
+
+services:
+  # ==================== ZOOKEEPER ====================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: feast-zookeeper
+    hostname: zookeeper
+    ports:
+      - "2182:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    networks:
+      - feature-store-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================== KAFKA ====================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: feast-kafka
+    hostname: kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9094:9092"
+      - "29094:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - feature-store-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================== REDIS (Online Feature Store) ====================
+  redis:
+    image: redis:7-alpine
+    container_name: feast-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - feature-store-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================== POSTGRESQL (Offline Store + Registry) ====================
+  postgres:
+    image: postgres:15-alpine
+    container_name: feast-postgres
+    hostname: postgres
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: feast
+      POSTGRES_PASSWORD: feast_password
+      POSTGRES_DB: feast_registry
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - feature-store-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U feast -d feast_registry"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================== SPARK MASTER ====================
+  spark-master:
+    image: bde2020/spark-master:3.3.0-hadoop3.3
+    container_name: feast-spark-master
+    hostname: spark-master
+    ports:
+      - "8082:8080"
+      - "7078:7077"
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+      - SPARK_MASTER=spark://spark-master:7077
+    volumes:
+      - ./spark/apps:/opt/spark-apps
+      - ./spark/data:/opt/spark-data
+      - spark-logs:/spark/logs
+    networks:
+      - feature-store-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ==================== SPARK WORKER ====================
+  spark-worker:
+    image: bde2020/spark-worker:3.3.0-hadoop3.3
+    container_name: feast-spark-worker
+    hostname: spark-worker
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    ports:
+      - "8083:8081"
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+    volumes:
+      - ./spark/apps:/opt/spark-apps
+      - ./spark/data:/opt/spark-data
+      - spark-worker-logs:/spark/logs
+    networks:
+      - feature-store-network
+    restart: unless-stopped
+
+  # ==================== JUPYTER LAB (with Feast + PySpark) ====================
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: feast-jupyter
+    hostname: jupyter
+    depends_on:
+      spark-master:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8889:8888"
+      - "4041:4040"
+    environment:
+      - JUPYTER_TOKEN=feast-token
+      - SPARK_MASTER=spark://spark-master:7077
+      - PYSPARK_DRIVER_PYTHON=jupyter
+      - PYSPARK_DRIVER_PYTHON_OPTS=lab
+      # Kafka
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # PostgreSQL
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=feast
+      - POSTGRES_PASSWORD=feast_password
+      - POSTGRES_DB=feast_registry
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./spark/apps:/home/jovyan/spark-apps
+      - ./data:/home/jovyan/data
+      - ./feast_repo:/home/jovyan/feast_repo
+      - jupyter-data:/home/jovyan/.jupyter
+    networks:
+      - feature-store-network
+    user: root
+    command: >
+      bash -c "
+        pip install --quiet feast[redis,postgres] kafka-python confluent-kafka pyspark==3.3.0 delta-spark==2.3.0 pyarrow psycopg2-binary pandas redis sqlalchemy &&
+        start-notebook.sh --NotebookApp.token='feast-token'
+      "
+    restart: unless-stopped
+
+  # ==================== KAFKA UI ====================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: feast-kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "9010:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: feature-store-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - feature-store-network
+    restart: unless-stopped
+
+# ==================== NETWORKS ====================
+networks:
+  feature-store-network:
+    driver: bridge
+    name: feature-store-network
+
+# ==================== VOLUMES ====================
+volumes:
+  zookeeper-data:
+    name: feast-zookeeper-data
+  zookeeper-logs:
+    name: feast-zookeeper-logs
+  kafka-data:
+    name: feast-kafka-data
+  redis-data:
+    name: feast-redis-data
+  postgres-data:
+    name: feast-postgres-data
+  spark-logs:
+    name: feast-spark-logs
+  spark-worker-logs:
+    name: feast-spark-worker-logs
+  jupyter-data:
+    name: feast-jupyter-data

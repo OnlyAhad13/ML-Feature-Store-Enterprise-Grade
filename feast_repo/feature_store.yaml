@@ -1,0 +1,12 @@
+project: ml_feature_store
+provider: local
+registry: data/registry.db
+
+online_store:
+  type: redis
+  connection_string: "localhost:6379"  # Host machine access
+
+offline_store:
+  type: file
+
+entity_key_serialization_version: 3
