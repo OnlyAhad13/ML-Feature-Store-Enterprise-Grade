@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# ML-Feature-Store-Enterprise-Grade
-Production-grade ML Feature Store &amp; MLOps platform. Orchestrates the full lifecycle of features from Kafka/Spark ingestion to sub-20ms online serving via Feast and Redis. Includes drift detection and point-in-time correctness.
-=======
 # 🏗️ ML Feature Store
 
 A production-grade **Feature Store** platform built with **Feast**, **Kafka**, **Spark Streaming**, **Redis**, and **PostgreSQL**. This project demonstrates real-time ML feature engineering, from data ingestion to low-latency model inference.
