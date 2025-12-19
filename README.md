@@ -330,6 +330,5 @@ MIT License - Feel free to use this project for learning and portfolio purposes.
 ---
 
 <div align="center">
-  <b>Built with ❤️ for ML Engineering</b>
+  <b>Built with ❤️ by Syed Abdul Ahad</b>
 </div>
->>>>>>> b59bf4f (Created repo and added config)
