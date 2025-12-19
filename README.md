@@ -82,14 +82,14 @@ flowchart TB
     API -->|"Features"| MODEL
 
     %% Styling
-    classDef generator fill:#e1f5fe,stroke:#01579b
-    classDef kafka fill:#f3e5f5,stroke:#4a148c
-    classDef spark fill:#fff3e0,stroke:#e65100
-    classDef storage fill:#e8f5e9,stroke:#1b5e20
-    classDef feast fill:#fce4ec,stroke:#880e4f
-    classDef redis fill:#ffebee,stroke:#b71c1c
-    classDef airflow fill:#e0f2f1,stroke:#004d40
-    classDef inference fill:#f3e5f5,stroke:#6a1b9a
+    classDef generator fill:#e1f5fe,stroke:#01579b,color:#000000
+    classDef kafka fill:#f3e5f5,stroke:#4a148c,color:#000000
+    classDef spark fill:#fff3e0,stroke:#e65100,color:#000000
+    classDef storage fill:#e8f5e9,stroke:#1b5e20,color:#000000
+    classDef feast fill:#fce4ec,stroke:#880e4f,color:#000000
+    classDef redis fill:#ffebee,stroke:#b71c1c,color:#000000
+    classDef airflow fill:#e0f2f1,stroke:#004d40,color:#000000
+    classDef inference fill:#f3e5f5,stroke:#6a1b9a,color:#000000
 
     class BG,SG generator
     class KAFKA kafka
