@@ -2,11 +2,18 @@
 
 A production-grade **Feature Store** platform built with **Feast**, **Kafka**, **Spark Streaming**, **Redis**, and **PostgreSQL**. This project demonstrates real-time ML feature engineering, from data ingestion to low-latency model inference.
 
-[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
-[![Feast](https://img.shields.io/badge/Feast-0.37-orange.svg)](https://feast.dev/)
-[![Kafka](https://img.shields.io/badge/Kafka-7.5-black.svg)](https://kafka.apache.org/)
-[![Spark](https://img.shields.io/badge/Spark-3.3-E25A1C.svg)](https://spark.apache.org/)
-[![Redis](https://img.shields.io/badge/Redis-7.0-DC382D.svg)](https://redis.io/)
+<div align="center">
+
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Feast](https://img.shields.io/badge/Feast-0.37-FF6F00?style=for-the-badge&logo=feast&logoColor=white)
+![Apache Kafka](https://img.shields.io/badge/Kafka-7.5-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)
+![Apache Spark](https://img.shields.io/badge/Spark-3.3-E25A1C?style=for-the-badge&logo=apachespark&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7.0-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Apache Airflow](https://img.shields.io/badge/Airflow-2.8-017CEE?style=for-the-badge&logo=apacheairflow&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+
+</div>
 
 ---
 
